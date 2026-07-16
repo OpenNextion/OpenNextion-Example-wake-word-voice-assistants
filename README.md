@@ -7,28 +7,23 @@
   <img src="docs/images/opennextion-esphome-voice-assistant-demo.jpg" alt="OpenNextion ESPHome voice assistant demo on OpenNextion display" width="820">
 </p>
 
-OpenNextion ESPHome Voice Assistant is an OpenNextion board support fork of
-[ESPHome wake-word voice assistants](https://github.com/esphome/wake-word-voice-assistants).
-It adds ready-to-build ESPHome configurations for OpenNextion ESP32-S3 display
-boards and turns them into Home Assistant Assist voice satellites.
+OpenNextion ESPHome Voice Assistant is a Home Assistant voice satellite project
+for OpenNextion ESP32-S3 display boards. It ports the official
+[ESPHome wake-word voice assistants](https://github.com/esphome/wake-word-voice-assistants)
+example to OpenNextion hardware, with touchscreen status UI, microphone input,
+speaker output, Wi-Fi provisioning, local wake word detection, and timer alarm
+handling.
 
-This repository is intended to make the ESPHome wake-word voice assistant
-examples easier to build, flash, and validate on supported OpenNextion
-development boards while the upstream board support pull requests are under
-review.
+Default wake word: **Okay Nabu**
 
 ## Supported Boards
 
-The current public branch focuses on two OpenNextion ESP32-S3 display boards:
+The public `v0.1.0` release targets two OpenNextion ESP32-S3 display boards:
 
-| ESPHome YAML | Display model | Size | Resolution | Display driver | Status |
+| Display model | Size | Resolution | Display driver | ESPHome YAML | Status |
 | --- | --- | --- | --- | --- | --- |
-| `OpenNextion/ONX3248G035/onx3248g035.yaml` | [ONX3248G035][onx3248g035] | 3.5 inch | 320 x 480 | ST7796U | Verified |
-| `OpenNextion/ONX2432G028/onx2432g028.yaml` | [ONX2432G028][onx2432g028] | 2.8 inch | 240 x 320 | ST7789 | Verified |
-
-Each board directory contains its own README with hardware notes, pin mapping,
-Wi-Fi provisioning, Home Assistant discovery, Assist setup, and ESPHome Device
-Builder sync guidance.
+| [ONX3248G035][onx3248g035] | 3.5 inch | 320 x 480 | ST7796U | `OpenNextion/ONX3248G035/onx3248g035.yaml` | Verified |
+| [ONX2432G028][onx2432g028] | 2.8 inch | 240 x 320 | ST7789 | `OpenNextion/ONX2432G028/onx2432g028.yaml` | Verified |
 
 The boards expose microphone and speaker interfaces, but microphone and speaker
 modules are not directly included with the boards. The board reference links
@@ -36,7 +31,58 @@ include OpenNextion microphone and speaker module information and purchase links
 as optional accessory references; other compatible microphone and speaker
 hardware can also be used.
 
-Do not flash firmware built for one display model onto another display model.
+Do not flash firmware built for one display model onto the other display model.
+
+## Quick Start
+
+1. Download the matching `.factory.bin` file for your board from
+   [GitHub Releases][release-downloads].
+2. Flash the factory binary from address `0x0`.
+3. If the device cannot connect to a known Wi-Fi network, connect to its
+   fallback ESPHome access point.
+4. Open `http://192.168.4.1/` if the captive portal does not open automatically.
+5. Select your 2.4 GHz Wi-Fi network and enter the password.
+6. Add the ESPHome device in Home Assistant when it is discovered.
+7. Configure Home Assistant Assist and select a voice pipeline.
+8. Say **Okay Nabu** to start using the voice assistant.
+
+Use a stable 2.4 GHz network for voice assistant use. Weak signal or roaming
+scans can delay TTS streaming and make playback choppy.
+
+## Firmware Download and Flashing
+
+Download firmware from the GitHub Releases page. ESPHome factory binaries are
+intended for full initial flashing from address `0x0`.
+
+| Target | Firmware file | Version | Flash address |
+| --- | --- | --- | --- |
+| [onx3248g035][release-downloads] | `opennextion-esphome-voice-assistant-v0.1.0-onx3248g035.factory.bin` | `v0.1.0` | `0x0` |
+| [onx2432g028][release-downloads] | `opennextion-esphome-voice-assistant-v0.1.0-onx2432g028.factory.bin` | `v0.1.0` | `0x0` |
+
+Flash a factory binary with:
+
+```bash
+python -m esptool --chip esp32s3 -p /dev/cu.wchusbserial1110 -b 921600 write_flash \
+  0x0 ./opennextion-esphome-voice-assistant-v0.1.0-onx2432g028.factory.bin
+```
+
+Replace the serial port and firmware file name as needed for your board. For
+this release, full firmware flashing is recommended. OTA firmware downloads are
+not provided unless the OTA flow is separately validated.
+
+## Home Assistant Usage
+
+After Wi-Fi provisioning, Home Assistant should discover the ESPHome device on
+the same network. Add the device, then configure an Assist voice pipeline with
+speech-to-text, conversation, and text-to-speech services.
+
+The device provides:
+
+- Local wake word detection with `micro_wake_word`
+- PDM microphone input for Home Assistant speech-to-text
+- I2S speaker output for Home Assistant text-to-speech responses
+- Touchscreen status UI for listening, thinking, replying, error, mute, and timer states
+- Touch-to-stop behavior for Home Assistant Assist timer alarms
 
 ## Background
 
@@ -51,9 +97,6 @@ touch, microphone input, speaker output, and published hardware reference files
 on a compact development board. This makes it easier to build an interactive
 voice satellite with both visual feedback and touch control, instead of wiring a
 display, touch panel, audio input, and audio output from scratch.
-
-This fork keeps the original ESPHome voice assistant behavior and adds the
-OpenNextion-specific board configuration needed by the supported boards.
 
 ## 3D Printed Enclosure
 
@@ -71,8 +114,8 @@ MakerWorld project links:
 
 ## Current Porting Work
 
-This version is based on ESPHome wake-word voice assistants and adds
-OpenNextion multi-board support. The main changes are:
+This version is based on ESPHome wake-word voice assistants and adds OpenNextion
+multi-board support. The main changes are:
 
 ### 1. OpenNextion Board Support
 
@@ -85,38 +128,29 @@ configurations for:
 The OpenNextion configurations are grouped under `OpenNextion/` to avoid adding
 one top-level directory per board model as the series grows.
 
-### 2. Display and Board Initialization
+### 2. Display, Touch, and Audio Hardware
 
-The port adds the OpenNextion display initialization required by the supported
+The port adds the OpenNextion hardware initialization required by the supported
 boards:
 
 - ST7796U SPI TFT panel support for ONX3248G035
 - ST7789 SPI TFT panel support for ONX2432G028
 - BGR color order for the supported panels
-- PCF8574 IO expander support for LCD reset and speaker amplifier control
-- Backlight GPIO setup
 - CST826 capacitive touch support on the shared I2C bus
-
-### 3. Voice Assistant Hardware
-
-The OpenNextion configurations expose the hardware needed by Home Assistant
-Assist:
-
 - PDM microphone input on GPIO19 / GPIO20
 - I2S speaker output on GPIO16 / GPIO14 / GPIO15
-- PCF8574-controlled speaker amplifier enable
-- ESPHome speaker media player for text-to-speech playback
-- ESPHome voice assistant component using the configured microphone and speaker
+- PCF8574 IO expander support for LCD reset and speaker amplifier control
+- Backlight GPIO setup
 
-### 4. Wake Word, UI, and Timer Behavior
+### 3. Voice Assistant UI and Timer Behavior
 
-The port keeps the original ESPHome voice assistant UI flow and adapts it to
-the OpenNextion displays:
+The port keeps the original ESPHome voice assistant UI flow and adapts it to the
+OpenNextion displays:
 
-- On-device wake word detection with `micro_wake_word`
-- Default wake word: Okay Nabu
 - Listening, thinking, replying, error, mute, and timer-finished display states
-- Touch-to-stop behavior for Home Assistant Assist timer alarms
+- ESPHome speaker media player for text-to-speech playback
+- Home Assistant Assist timer alarm playback on the device
+- Touch-to-stop behavior for timer alarms
 - ESPHome fallback AP and captive portal Wi-Fi provisioning
 
 ## Current Validation Status
@@ -133,144 +167,26 @@ the OpenNextion displays:
 - CST826 touch input has been validated on both OpenNextion boards
 - PDM microphone input has been validated with Home Assistant Assist
 - I2S speaker output has been validated with Home Assistant TTS responses
-- Local wake word detection has been validated with the configured models
+- Local wake word detection has been validated with the configured model
 - Assist timers can ring on the device and be stopped by touching the screen
 
 ### Firmware Validation Matrix
 
-Legend: ✅ Verified / ⚠️ Hardware-dependent / ⏳ Not used
+Legend: ✅ Verified / ⚠️ Partially verified or hardware-dependent / ⏳ Not used
 
 | Board | Build | Boot | Display | Touch | Microphone | Speaker | Assist flow | Timer alarm | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | ONX3248G035 | ✅ Verified | ✅ Verified | ✅ Verified | ✅ Verified | ✅ Verified | ✅ Verified | ✅ Verified | ✅ Verified | 3.5 inch ST7796U display |
 | ONX2432G028 | ✅ Verified | ✅ Verified | ✅ Verified | ✅ Verified | ✅ Verified | ✅ Verified | ✅ Verified | ✅ Verified | 2.8 inch ST7789 display |
 
-## ESPHome Device Builder Usage
+## Build from Source
 
-ESPHome Device Builder shows device cards for YAML files placed directly in its
-configuration root. Keep the source files in this repository under
-`OpenNextion/`, but copy the main board YAML file itself to the ESPHome
-configuration root.
+The main installation path is to use release binaries. If you want to customize
+or rebuild the ESPHome firmware locally, see [Build from Source](docs/build-from-source.md).
 
-Example:
-
-```bash
-cp OpenNextion/ONX2432G028/onx2432g028.yaml /path/to/esphome/config/onx2432g028.yaml
-cp OpenNextion/ONX3248G035/onx3248g035.yaml /path/to/esphome/config/onx3248g035.yaml
-```
-
-Do not copy the whole `OpenNextion/ONX2432G028/` or
-`OpenNextion/ONX3248G035/` directory into the ESPHome configuration directory.
-Command-line ESPHome can compile nested YAML paths, but the Device Builder web
-UI will not show a device card unless the YAML file is in the configuration
-root.
-
-## Wi-Fi Provisioning and Home Assistant Setup
-
-The OpenNextion configurations enable ESPHome's fallback access point and
-captive portal. If the device cannot connect to a known Wi-Fi network after
-boot, it starts its own temporary Wi-Fi access point.
-
-1. Flash the matching firmware for your board.
-2. Connect to the fallback ESPHome access point for the device.
-3. Open `http://192.168.4.1/` if the captive portal does not open
-   automatically.
-4. Select your 2.4 GHz Wi-Fi network and enter the password.
-5. Add the ESPHome device in Home Assistant.
-6. Configure Home Assistant Assist and select a voice pipeline.
-
-Use a stable 2.4 GHz network for voice assistant use. Weak signal or roaming
-scans can delay TTS streaming and make playback choppy.
-
-## Firmware Download and Flashing
-
-Download firmware from the GitHub Release page when release binaries are
-available. ESPHome factory binaries are intended for full initial flashing from
-address `0x0`.
-
-Release files can follow this naming pattern:
-
-```text
-opennextion-esphome-voice-assistant-<version>-<target>.factory.bin
-```
-
-| Target | Example firmware file | Flash address |
-| --- | --- | --- |
-| [onx3248g035][release-downloads] | `opennextion-esphome-voice-assistant-v0.1.0-onx3248g035.factory.bin` | `0x0` |
-| [onx2432g028][release-downloads] | `opennextion-esphome-voice-assistant-v0.1.0-onx2432g028.factory.bin` | `0x0` |
-
-Flash a factory binary with:
-
-```bash
-VERSION=v0.1.0
-python -m esptool --chip esp32s3 -p /dev/cu.wchusbserial1110 -b 921600 write_flash \
-  0x0 ./opennextion-esphome-voice-assistant-${VERSION}-onx2432g028.factory.bin
-```
-
-Replace `VERSION`, serial port, and firmware target name as needed for your
-board.
-
-For this project, full firmware flashing is recommended for first installation.
-OTA firmware downloads are not provided unless the OTA flow is separately
-validated.
-
-## Local Build, Flash, and Logs
-
-This project uses ESPHome with the ESP-IDF framework. The commands below are
-for OpenNextion boards.
-
-### Validate Configuration
-
-```bash
-esphome config OpenNextion/ONX2432G028/onx2432g028.yaml
-esphome config OpenNextion/ONX3248G035/onx3248g035.yaml
-```
-
-### Build
-
-```bash
-esphome compile OpenNextion/ONX2432G028/onx2432g028.yaml
-esphome compile OpenNextion/ONX3248G035/onx3248g035.yaml
-```
-
-### Flash and View Logs
-
-Replace the serial device as needed for your system:
-
-```bash
-esphome run OpenNextion/ONX2432G028/onx2432g028.yaml --device /dev/ttyUSB0
-esphome run OpenNextion/ONX3248G035/onx3248g035.yaml --device /dev/ttyUSB0
-```
-
-## Single Factory Binary
-
-ESPHome generates a single `firmware.factory.bin` file that can be written from
-address `0x0`. This is useful for full initial flashing with `esptool`.
-
-When compiling directly from this repository, the files are generated under the
-YAML directory:
-
-```text
-OpenNextion/ONX2432G028/.esphome/build/onx2432g028/.pioenvs/onx2432g028/firmware.factory.bin
-OpenNextion/ONX3248G035/.esphome/build/onx3248g035/.pioenvs/onx3248g035/firmware.factory.bin
-```
-
-When compiling from an ESPHome Device Builder configuration root, the files are
-generated under that configuration directory:
-
-```text
-.esphome/build/onx2432g028/.pioenvs/onx2432g028/firmware.factory.bin
-.esphome/build/onx3248g035/.pioenvs/onx3248g035/firmware.factory.bin
-```
-
-Flash a factory binary with:
-
-```bash
-python -m esptool --chip esp32s3 -p /dev/cu.wchusbserial1110 -b 921600 write_flash \
-  0x0 .esphome/build/onx2432g028/.pioenvs/onx2432g028/firmware.factory.bin
-```
-
-Replace the serial port and firmware path as needed for your board.
+That document includes ESPHome Device Builder layout notes, `esphome config`,
+`esphome compile`, `esphome run`, `esphome logs`, and the location of generated
+`firmware.factory.bin` files.
 
 ## Roadmap
 

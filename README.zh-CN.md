@@ -7,32 +7,73 @@
   <img src="docs/images/opennextion-esphome-voice-assistant-demo.jpg" alt="OpenNextion ESPHome 语音助手在 OpenNextion 显示屏上的运行效果" width="820">
 </p>
 
-OpenNextion ESPHome Voice Assistant 是 [ESPHome wake-word voice assistants](https://github.com/esphome/wake-word-voice-assistants) 的 OpenNextion 开发板适配分支。它为 OpenNextion ESP32-S3 显示屏开发板增加了可直接构建的 ESPHome 配置，并将这些开发板变成 Home Assistant Assist 语音卫星设备。
+OpenNextion ESPHome Voice Assistant 是一个面向 OpenNextion ESP32-S3 显示屏开发板的 Home Assistant 语音卫星项目。它将官方
+[ESPHome wake-word voice assistants](https://github.com/esphome/wake-word-voice-assistants)
+示例移植到 OpenNextion 硬件上，支持触摸屏状态 UI、麦克风输入、喇叭输出、Wi-Fi 配网、本地唤醒词检测和定时器响铃处理。
 
-这个仓库的目标，是让 ESPHome wake-word voice assistant 示例可以更容易地在已支持的 OpenNextion 开发板上构建、刷写和验证，同时等待上游板级支持 PR 审核。
+默认唤醒词：**Okay Nabu**
 
 ## 支持的开发板
 
-当前公开分支重点支持两款 OpenNextion ESP32-S3 显示屏开发板：
+公开的 `v0.1.0` release 面向两款 OpenNextion ESP32-S3 显示屏开发板：
 
-| ESPHome YAML | 开发板型号 | 尺寸 | 分辨率 | 显示驱动 | 状态 |
+| 显示屏型号 | 尺寸 | 分辨率 | 显示驱动 | ESPHome YAML | 状态 |
 | --- | --- | --- | --- | --- | --- |
-| `OpenNextion/ONX3248G035/onx3248g035.yaml` | [ONX3248G035][onx3248g035] | 3.5 英寸 | 320 x 480 | ST7796U | 已验证 |
-| `OpenNextion/ONX2432G028/onx2432g028.yaml` | [ONX2432G028][onx2432g028] | 2.8 英寸 | 240 x 320 | ST7789 | 已验证 |
-
-每个开发板目录都有独立 README，包含硬件说明、引脚映射、Wi-Fi 配网、Home Assistant 发现、Assist 设置和 ESPHome Device Builder 同步说明。
+| [ONX3248G035][onx3248g035] | 3.5 英寸 | 320 x 480 | ST7796U | `OpenNextion/ONX3248G035/onx3248g035.yaml` | 已验证 |
+| [ONX2432G028][onx2432g028] | 2.8 英寸 | 240 x 320 | ST7789 | `OpenNextion/ONX2432G028/onx2432g028.yaml` | 已验证 |
 
 开发板提供麦克风和喇叭接口，但开发板本身不直接包含麦克风和喇叭模块。开发板参考链接中包含 OpenNextion 麦克风和喇叭模块的信息及购买链接，可作为可选配件参考；也可以使用其他兼容的麦克风和喇叭硬件。
 
 请不要把为某一款显示屏构建的固件刷写到另一款显示屏上。
+
+## 快速开始
+
+1. 从 [GitHub Releases][release-downloads] 下载与你的开发板匹配的 `.factory.bin` 文件。
+2. 从地址 `0x0` 刷写 factory binary。
+3. 如果设备无法连接到已知 Wi-Fi 网络，请连接它创建的 ESPHome fallback 热点。
+4. 如果 captive portal 没有自动打开，请访问 `http://192.168.4.1/`。
+5. 选择你的 2.4 GHz Wi-Fi 网络并输入密码。
+6. 设备被 Home Assistant 发现后，添加这个 ESPHome 设备。
+7. 配置 Home Assistant Assist，并选择语音流水线。
+8. 说 **Okay Nabu** 开始使用语音助手。
+
+语音助手建议使用稳定的 2.4 GHz 网络。信号弱或 Wi-Fi 漫游扫描可能导致 TTS 流式传输延迟，并让播放变得卡顿。
+
+## 固件下载和刷写
+
+从 GitHub Releases 页面下载固件。ESPHome factory binary 适合从地址 `0x0` 进行完整首次刷写。
+
+| 目标 | 固件文件 | 版本 | 刷写地址 |
+| --- | --- | --- | --- |
+| [onx3248g035][release-downloads] | `opennextion-esphome-voice-assistant-v0.1.0-onx3248g035.factory.bin` | `v0.1.0` | `0x0` |
+| [onx2432g028][release-downloads] | `opennextion-esphome-voice-assistant-v0.1.0-onx2432g028.factory.bin` | `v0.1.0` | `0x0` |
+
+刷写 factory binary：
+
+```bash
+python -m esptool --chip esp32s3 -p /dev/cu.wchusbserial1110 -b 921600 write_flash \
+  0x0 ./opennextion-esphome-voice-assistant-v0.1.0-onx2432g028.factory.bin
+```
+
+请按你的开发板替换串口和固件文件名。对于这个 release，首次安装建议完整刷写固件。除非 OTA 流程经过单独验证，否则暂不提供 OTA 固件下载。
+
+## Home Assistant 使用方式
+
+Wi-Fi 配网完成后，Home Assistant 应该可以在同一网络中发现这个 ESPHome 设备。添加设备后，配置包含语音转文字、对话和文字转语音服务的 Assist 语音流水线。
+
+设备提供：
+
+- 使用 `micro_wake_word` 的本地唤醒词检测
+- 用于 Home Assistant 语音转文字的 PDM 麦克风输入
+- 用于 Home Assistant 文字转语音响应的 I2S 喇叭输出
+- Listening、thinking、replying、error、mute 和 timer 状态的触摸屏 UI
+- Home Assistant Assist 定时器响铃时支持触摸屏停止
 
 ## 背景
 
 我想把手头的 OpenNextion 开发板适配成 Home Assistant 语音助手的输入和输出设备。刚好看到 Home Assistant 官方文档介绍了 ESPHome wake-word voice assistant 项目，所以 fork 了这个项目，并为我的 OpenNextion 开发板完成适配。
 
 OpenNextion 开发板很适合这类 DIY Home Assistant 语音助手项目，因为它在一块紧凑的开发板上集成了 ESP32-S3、SPI TFT 显示屏、电容触摸、麦克风输入、喇叭输出，并公开了硬件参考资料。这样可以更容易地构建一个同时带有视觉反馈和触控操作的语音卫星设备，而不需要从零开始连接显示屏、触摸屏、音频输入和音频输出。
-
-这个 fork 保留原始 ESPHome 语音助手行为，并增加已支持 OpenNextion 开发板所需的板级配置。
 
 ## 3D 打印外壳
 
@@ -58,35 +99,27 @@ OpenNextion ESPHome Voice Assistant 为以下开发板提供专用 ESPHome YAML 
 
 OpenNextion 配置统一放在 `OpenNextion/` 目录下，避免后续支持更多型号时在仓库顶层增加过多开发板目录。
 
-### 2. 显示屏和开发板初始化
+### 2. 显示屏、触摸和音频硬件
 
-适配中增加了已支持 OpenNextion 开发板所需的显示屏初始化：
+适配中增加了已支持 OpenNextion 开发板所需的硬件初始化：
 
 - ONX3248G035 的 ST7796U SPI TFT 面板支持
 - ONX2432G028 的 ST7789 SPI TFT 面板支持
 - 已支持面板的 BGR 颜色顺序
-- PCF8574 IO 扩展器，用于 LCD 复位和喇叭功放控制
-- 背光 GPIO 配置
 - 共享 I2C 总线上的 CST826 电容触摸支持
-
-### 3. 语音助手硬件
-
-OpenNextion 配置暴露了 Home Assistant Assist 所需的硬件能力：
-
 - GPIO19 / GPIO20 上的 PDM 麦克风输入
 - GPIO16 / GPIO14 / GPIO15 上的 I2S 喇叭输出
-- 由 PCF8574 控制的喇叭功放使能
-- 用于 TTS 播放的 ESPHome speaker media player
-- 使用已配置麦克风和喇叭的 ESPHome voice assistant 组件
+- PCF8574 IO 扩展器，用于 LCD 复位和喇叭功放控制
+- 背光 GPIO 配置
 
-### 4. 唤醒词、UI 和定时器行为
+### 3. 语音助手 UI 和定时器行为
 
 适配保留原始 ESPHome 语音助手 UI 流程，并适配到 OpenNextion 显示屏：
 
-- 使用 `micro_wake_word` 的本地唤醒词检测
-- 默认唤醒词：Okay Nabu
 - Listening、thinking、replying、error、mute 和 timer-finished 显示状态
-- Home Assistant Assist 定时器响铃时支持触摸屏停止
+- 用于 TTS 播放的 ESPHome speaker media player
+- Home Assistant Assist 定时器可以在设备上响铃
+- 定时器响铃时支持触摸屏停止
 - ESPHome fallback AP 和 captive portal Wi-Fi 配网
 
 ## 当前验证状态
@@ -115,112 +148,11 @@ OpenNextion 配置暴露了 Home Assistant Assist 所需的硬件能力：
 | ONX3248G035 | ✅ 已验证 | ✅ 已验证 | ✅ 已验证 | ✅ 已验证 | ✅ 已验证 | ✅ 已验证 | ✅ 已验证 | ✅ 已验证 | 3.5 英寸 ST7796U 显示屏 |
 | ONX2432G028 | ✅ 已验证 | ✅ 已验证 | ✅ 已验证 | ✅ 已验证 | ✅ 已验证 | ✅ 已验证 | ✅ 已验证 | ✅ 已验证 | 2.8 英寸 ST7789 显示屏 |
 
-## ESPHome Device Builder 使用方式
+## 从源码构建
 
-ESPHome Device Builder 只会为配置根目录下的 YAML 文件显示设备卡片。源码仍保留在本仓库的 `OpenNextion/` 目录下，但需要把主开发板 YAML 文件本身复制到 ESPHome 配置根目录。
+主要安装路径是使用 release 固件。如果你希望自定义或本地重新构建 ESPHome 固件，请参考 [Build from Source](docs/build-from-source.md)。
 
-示例：
-
-```bash
-cp OpenNextion/ONX2432G028/onx2432g028.yaml /path/to/esphome/config/onx2432g028.yaml
-cp OpenNextion/ONX3248G035/onx3248g035.yaml /path/to/esphome/config/onx3248g035.yaml
-```
-
-如果希望 Device Builder Web UI 显示设备卡片，请不要把整个 `OpenNextion/ONX2432G028/` 或 `OpenNextion/ONX3248G035/` 目录复制到 ESPHome 配置目录。命令行 ESPHome 可以编译嵌套路径中的 YAML，但 Device Builder Web UI 只有在 YAML 文件位于配置根目录时才会显示设备卡片。
-
-## Wi-Fi 配网和 Home Assistant 设置
-
-OpenNextion 配置启用了 ESPHome fallback access point 和 captive portal。如果设备启动后无法连接到已知 Wi-Fi 网络，它会创建一个临时 Wi-Fi 热点。
-
-1. 刷写与你的开发板匹配的固件。
-2. 连接到该设备的 fallback ESPHome 热点。
-3. 如果 captive portal 没有自动打开，请访问 `http://192.168.4.1/`。
-4. 选择你的 2.4 GHz Wi-Fi 网络并输入密码。
-5. 在 Home Assistant 中添加 ESPHome 设备。
-6. 配置 Home Assistant Assist，并选择语音流水线。
-
-语音助手建议使用稳定的 2.4 GHz 网络。信号弱或 Wi-Fi 漫游扫描可能导致 TTS 流式传输延迟，并让播放变得卡顿。
-
-## 固件下载和刷写
-
-当 Release 固件可用时，可以从 GitHub Release 页面下载固件。ESPHome factory binary 适合从地址 `0x0` 进行完整首次刷写。
-
-Release 文件可以使用以下命名规则：
-
-```text
-opennextion-esphome-voice-assistant-<version>-<target>.factory.bin
-```
-
-| 目标 | 示例固件文件 | 刷写地址 |
-| --- | --- | --- |
-| [onx3248g035][release-downloads] | `opennextion-esphome-voice-assistant-v0.1.0-onx3248g035.factory.bin` | `0x0` |
-| [onx2432g028][release-downloads] | `opennextion-esphome-voice-assistant-v0.1.0-onx2432g028.factory.bin` | `0x0` |
-
-刷写 factory binary：
-
-```bash
-VERSION=v0.1.0
-python -m esptool --chip esp32s3 -p /dev/cu.wchusbserial1110 -b 921600 write_flash \
-  0x0 ./opennextion-esphome-voice-assistant-${VERSION}-onx2432g028.factory.bin
-```
-
-请按你的开发板替换 `VERSION`、串口和固件目标名称。
-
-对于这个项目，首次安装建议完整刷写固件。除非 OTA 流程经过单独验证，否则暂不提供 OTA 固件下载。
-
-## 本地构建、刷写和日志
-
-这个项目使用 ESPHome 和 ESP-IDF framework。以下命令面向 OpenNextion 开发板。
-
-### 验证配置
-
-```bash
-esphome config OpenNextion/ONX2432G028/onx2432g028.yaml
-esphome config OpenNextion/ONX3248G035/onx3248g035.yaml
-```
-
-### 构建
-
-```bash
-esphome compile OpenNextion/ONX2432G028/onx2432g028.yaml
-esphome compile OpenNextion/ONX3248G035/onx3248g035.yaml
-```
-
-### 刷写并查看日志
-
-请按你的系统替换串口设备：
-
-```bash
-esphome run OpenNextion/ONX2432G028/onx2432g028.yaml --device /dev/ttyUSB0
-esphome run OpenNextion/ONX3248G035/onx3248g035.yaml --device /dev/ttyUSB0
-```
-
-## 单个 Factory Binary
-
-ESPHome 会生成一个可以从地址 `0x0` 写入的 `firmware.factory.bin` 文件。这适合使用 `esptool` 进行完整首次刷写。
-
-如果直接从本仓库编译，文件会生成在 YAML 目录下：
-
-```text
-OpenNextion/ONX2432G028/.esphome/build/onx2432g028/.pioenvs/onx2432g028/firmware.factory.bin
-OpenNextion/ONX3248G035/.esphome/build/onx3248g035/.pioenvs/onx3248g035/firmware.factory.bin
-```
-
-如果从 ESPHome Device Builder 配置根目录编译，文件会生成在该配置目录下：
-
-```text
-.esphome/build/onx2432g028/.pioenvs/onx2432g028/firmware.factory.bin
-.esphome/build/onx3248g035/.pioenvs/onx3248g035/firmware.factory.bin
-```
-
-刷写 factory binary：
-
-```bash
-python -m esptool --chip esp32s3 -p /dev/cu.wchusbserial1110 -b 921600 write_flash \
-  0x0 .esphome/build/onx2432g028/.pioenvs/onx2432g028/firmware.factory.bin
-```
-
-请按你的开发板替换串口和固件路径。
+该文档包含 ESPHome Device Builder 目录说明、`esphome config`、`esphome compile`、`esphome run`、`esphome logs`，以及生成的 `firmware.factory.bin` 文件位置。
 
 ## Roadmap
 
