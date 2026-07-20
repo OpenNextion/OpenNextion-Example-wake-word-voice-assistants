@@ -18,7 +18,7 @@ Default wake word: **Okay Nabu**
 
 ## Supported Boards
 
-The public `v0.1.0` release targets two OpenNextion ESP32-S3 display boards:
+The public `v0.1.1` release targets two OpenNextion ESP32-S3 display boards:
 
 | Display model | Size | Resolution | Display driver | ESPHome YAML | Status |
 | --- | --- | --- | --- | --- | --- |
@@ -56,14 +56,14 @@ intended for full initial flashing from address `0x0`.
 
 | Target | Firmware file | Version | Flash address |
 | --- | --- | --- | --- |
-| [onx3248g035][release-downloads] | `opennextion-esphome-voice-assistant-v0.1.0-onx3248g035.factory.bin` | `v0.1.0` | `0x0` |
-| [onx2432g028][release-downloads] | `opennextion-esphome-voice-assistant-v0.1.0-onx2432g028.factory.bin` | `v0.1.0` | `0x0` |
+| [onx3248g035][release-downloads] | `opennextion-esphome-voice-assistant-v0.1.1-onx3248g035.factory.bin` | `v0.1.1` | `0x0` |
+| [onx2432g028][release-downloads] | `opennextion-esphome-voice-assistant-v0.1.1-onx2432g028.factory.bin` | `v0.1.1` | `0x0` |
 
 Flash a factory binary with:
 
 ```bash
 python -m esptool --chip esp32s3 -p /dev/cu.wchusbserial1110 -b 921600 write_flash \
-  0x0 ./opennextion-esphome-voice-assistant-v0.1.0-onx2432g028.factory.bin
+  0x0 ./opennextion-esphome-voice-assistant-v0.1.1-onx2432g028.factory.bin
 ```
 
 Replace the serial port and firmware file name as needed for your board. For

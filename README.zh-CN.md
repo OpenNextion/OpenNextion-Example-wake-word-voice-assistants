@@ -15,7 +15,7 @@ OpenNextion ESPHome Voice Assistant 是一个面向 OpenNextion ESP32-S3 显示�
 
 ## 支持的开发板
 
-公开的 `v0.1.0` release 面向两款 OpenNextion ESP32-S3 显示屏开发板：
+公开的 `v0.1.1` release 面向两款 OpenNextion ESP32-S3 显示屏开发板：
 
 | 显示屏型号 | 尺寸 | 分辨率 | 显示驱动 | ESPHome YAML | 状态 |
 | --- | --- | --- | --- | --- | --- |
@@ -45,14 +45,14 @@ OpenNextion ESPHome Voice Assistant 是一个面向 OpenNextion ESP32-S3 显示�
 
 | 目标 | 固件文件 | 版本 | 刷写地址 |
 | --- | --- | --- | --- |
-| [onx3248g035][release-downloads] | `opennextion-esphome-voice-assistant-v0.1.0-onx3248g035.factory.bin` | `v0.1.0` | `0x0` |
-| [onx2432g028][release-downloads] | `opennextion-esphome-voice-assistant-v0.1.0-onx2432g028.factory.bin` | `v0.1.0` | `0x0` |
+| [onx3248g035][release-downloads] | `opennextion-esphome-voice-assistant-v0.1.1-onx3248g035.factory.bin` | `v0.1.1` | `0x0` |
+| [onx2432g028][release-downloads] | `opennextion-esphome-voice-assistant-v0.1.1-onx2432g028.factory.bin` | `v0.1.1` | `0x0` |
 
 刷写 factory binary：
 
 ```bash
 python -m esptool --chip esp32s3 -p /dev/cu.wchusbserial1110 -b 921600 write_flash \
-  0x0 ./opennextion-esphome-voice-assistant-v0.1.0-onx2432g028.factory.bin
+  0x0 ./opennextion-esphome-voice-assistant-v0.1.1-onx2432g028.factory.bin
 ```
 
 请按你的开发板替换串口和固件文件名。对于这个 release，首次安装建议完整刷写固件。除非 OTA 流程经过单独验证，否则暂不提供 OTA 固件下载。
