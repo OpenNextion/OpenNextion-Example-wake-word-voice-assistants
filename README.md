@@ -70,6 +70,17 @@ Replace the serial port and firmware file name as needed for your board. For
 this release, full firmware flashing is recommended. OTA firmware downloads are
 not provided unless the OTA flow is separately validated.
 
+## Factory Reset and Re-Provisioning
+
+A normal factory firmware flash may not erase saved Wi-Fi credentials.
+
+To reset the device and return it to the ESPHome fallback AP provisioning flow,
+long-press the **BOOT** button for **10 seconds**. This triggers ESPHome factory
+reset and clears saved runtime state such as Wi-Fi provisioning data.
+
+If the device is not running correctly or you want a full clean installation,
+erase flash first and then flash the matching `.factory.bin` file again.
+
 ## Home Assistant Usage
 
 After Wi-Fi provisioning, Home Assistant should discover the ESPHome device on

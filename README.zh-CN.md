@@ -57,6 +57,14 @@ python -m esptool --chip esp32s3 -p /dev/cu.wchusbserial1110 -b 921600 write_fla
 
 请按你的开发板替换串口和固件文件名。对于这个 release，首次安装建议完整刷写固件。除非 OTA 流程经过单独验证，否则暂不提供 OTA 固件下载。
 
+## 恢复出厂设置和重新配网
+
+普通刷写 factory 固件不一定会清除已经保存的 Wi-Fi 信息。
+
+如果需要让设备重新进入 ESPHome fallback AP 配网流程，请长按 **BOOT** 键 **10 秒**。这会触发 ESPHome factory reset，并清除已保存的运行时状态，例如 Wi-Fi 配网信息。
+
+如果设备无法正常启动，或者你希望完全干净地重新安装，可以先执行整片擦除，再重新刷写对应的 `.factory.bin` 文件。
+
 ## Home Assistant 使用方式
 
 Wi-Fi 配网完成后，Home Assistant 应该可以在同一网络中发现这个 ESPHome 设备。添加设备后，配置包含语音转文字、对话和文字转语音服务的 Assist 语音流水线。
